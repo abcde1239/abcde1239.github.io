@@ -3,6 +3,8 @@ layout: denpa
 title: 青春男电波女-我与她与月亮的距离
 date: 2025-02-24 20:53:50
 tags: Anim
+categories:
+    - [Anim]
 ---
 ## 我与她与月亮的距离，或许我的人生也只是在40次和60次中的后者吧
 
