@@ -19,21 +19,19 @@
   <meta name="author" content="abcde SkyRoad">
   <meta name="keywords" content="">
   
-    <meta name="description" content="VNodevnode 到真实 DOM 在 vue 中采用了 patch 方法，其中先判断了其是否为普通 vnode 或描述组件的 vnode，然后再进行递归直到到达普通 vnode 后，开始进行渲染。 Q:开发 vue 项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？A:并非完全。当组件过于精细时，会导致 vnode 渲染时进行大量递归，影响性能。 Q:vue 的底层框架设计中，v">
+    <meta name="description" content="just my blog">
 <meta property="og:type" content="website">
-<meta property="og:title" content="page.title">
-<meta property="og:url" content="http://example.com/code/vue/Vnode.html">
+<meta property="og:title" content="归档">
+<meta property="og:url" content="http://example.com/archives/2025/08/index.html">
 <meta property="og:site_name" content="SkyRoad">
-<meta property="og:description" content="VNodevnode 到真实 DOM 在 vue 中采用了 patch 方法，其中先判断了其是否为普通 vnode 或描述组件的 vnode，然后再进行递归直到到达普通 vnode 后，开始进行渲染。 Q:开发 vue 项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？A:并非完全。当组件过于精细时，会导致 vnode 渲染时进行大量递归，影响性能。 Q:vue 的底层框架设计中，v">
+<meta property="og:description" content="just my blog">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2025-08-23T17:20:26.818Z">
-<meta property="article:modified_time" content="2025-08-23T17:19:33.278Z">
 <meta property="article:author" content="abcde SkyRoad">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>page.title - SkyRoad</title>
+  <title>归档 - SkyRoad</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -198,13 +196,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+     style="background: url('/img/denpo/background04.jpg') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="page.title"></span>
+            <span id="subtitle" data-typed-text="归档"></span>
           
         </div>
 
@@ -231,23 +229,23 @@
               <div class="col-12 col-md-10 m-auto">
                 
 
-<article class="page-content">
-  <h1 id="VNode"><a href="#VNode" class="headerlink" title="VNode"></a>VNode</h1><p>vnode 到真实 DOM 在 vue 中采用了 patch 方法，其中先判断了其是否为普通 vnode 或描述组件的 vnode，然后再进行递归直到到达普通 vnode 后，开始进行渲染。</p>
-<h2 id="Q-开发-vue-项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？"><a href="#Q-开发-vue-项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？" class="headerlink" title="Q:开发 vue 项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？"></a>Q:开发 vue 项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？</h2><p>A:并非完全。当组件过于精细时，会导致 vnode 渲染时进行大量递归，影响性能。</p>
-<h2 id="Q-vue-的底层框架设计中，vnode-是什么，为什么会使用-vnode？"><a href="#Q-vue-的底层框架设计中，vnode-是什么，为什么会使用-vnode？" class="headerlink" title="Q:vue 的底层框架设计中，vnode 是什么，为什么会使用 vnode？"></a>Q:vue 的底层框架设计中，vnode 是什么，为什么会使用 vnode？</h2><p>A: vnode，即 virtual node（虚拟节点），是 Vue 对真实 dom 的抽象表示，vnode 使得可以在内存中构建虚拟 dom 树，并由此描述 ui 结构，状态。其最核心的设计目的是：避免直接操作浏览器 DOM，提高性能，同时提供了跨平台能力。</p>
-<p>vnode 的形式如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs javascript">&#123;<br>  type,      <span class="hljs-comment">// 标签名或组件，例如 &#x27;div&#x27;，组件是 DOM 组渲染单个组件实际就是渲染单组 DOM</span><br>  props,     <span class="hljs-comment">// 属性、事件</span><br>  children,  <span class="hljs-comment">// 子节点，可为文本、VNode 数组或插槽函数（slot），当然也包括 null</span><br>  key,       <span class="hljs-comment">// 唯一标识，用于 diff 时复用节点</span><br>  el         <span class="hljs-comment">// 渲染后对应的真实 DOM（挂载后填充）</span><br>&#125;<br></code></pre></td></tr></table></figure>
-<h3 id="关于为什么使用-vnode-的详细解释"><a href="#关于为什么使用-vnode-的详细解释" class="headerlink" title="关于为什么使用 vnode 的详细解释"></a>关于为什么使用 vnode 的详细解释</h3><h4 id="1-性能优化"><a href="#1-性能优化" class="headerlink" title="1.性能优化"></a>1.性能优化</h4><p>dom 操作代价较高（造成重排 重绘 以及回流，影响性能）。Vnode 在内存中更新通过使用 diff 算法-&gt;最小化 patch-&gt;减少真实 dom 操作</p>
-<h4 id="2-状态与视图分离"><a href="#2-状态与视图分离" class="headerlink" title="2.状态与视图分离"></a>2.状态与视图分离</h4><p>数据变化-&gt;更新 vnode-&gt;patch-&gt;DOM，不直接操作浏览器 api，更易于维护测试</p>
-<h4 id="3-支持跨平台"><a href="#3-支持跨平台" class="headerlink" title="3.支持跨平台"></a>3.支持跨平台</h4><p>vnode 可以与平台渲染器解耦，使其在小程序，canvas，WebGL 上也能渲染。</p>
-<h4 id="4-抽象化"><a href="#4-抽象化" class="headerlink" title="4.抽象化"></a>4.抽象化</h4><p>在 vue 中，vnode 将真实 DOM 抽象为内存中可操作的虚拟节点，使开发者更注重 UI 结构和数据变化</p>
-<h2 id="Q-解释-vnode-的挂载和更新，解释-diff-算法"><a href="#Q-解释-vnode-的挂载和更新，解释-diff-算法" class="headerlink" title="Q:解释 vnode 的挂载和更新，解释 diff 算法"></a>Q:解释 vnode 的挂载和更新，解释 diff 算法</h2><p>vnode 使用 mount 和 patch，判断为挂载后，先判断 vnode 的 type，然后由处理 props-&gt;处理 children-&gt;插入 dom;vnode 判断为更新时，先比较 type，不同则卸载旧并挂载新，相同则复用原来的 dom，并进行更新 props：正常修改，删除，添加，最后更新 children。</p>
-<h3 id="children-的更新"><a href="#children-的更新" class="headerlink" title="children 的更新"></a>children 的更新</h3><p>Vue 通过 VNode 对 DOM 操作进行预处理以节约性能，分为初次挂载和更新两种情况。更新时，文本子节点直接覆盖，null 保持不变；而 VNode 或插槽子节点则走严格 diff：头尾扫描快速跳过相同节点，key 用于复用、删除或新增，LIS（最长递增序列） 优化确保最少移动。</p>
-<h3 id="diff-算法概述：头尾扫描-key-映射-LIS-优化移动"><a href="#diff-算法概述：头尾扫描-key-映射-LIS-优化移动" class="headerlink" title="diff 算法概述：头尾扫描+key 映射+LIS 优化移动"></a>diff 算法概述：头尾扫描+key 映射+LIS 优化移动</h3>
-
+<div class="list-group">
+  <p class="h4">共计 7 篇文章</p>
+  <hr>
   
+  
+    
+      
+      <p class="h5">2025</p>
+    
+    <a href="/2025/08/24/vue/Vnode/" class="list-group-item list-group-item-action">
+      <time>08-24</time>
+      <div class="list-group-item-title"></div>
+    </a>
+  
+</div>
 
-</article>
+
 
 
 

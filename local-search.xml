@@ -4,6 +4,19 @@
   
   
   <entry>
+    <title></title>
+    <link href="/2025/08/24/vue/Vnode/"/>
+    <url>/2025/08/24/vue/Vnode/</url>
+    
+    <content type="html"><![CDATA[<h1 id="VNode"><a href="#VNode" class="headerlink" title="VNode"></a>VNode</h1><p>vnode 到真实 DOM 在 vue 中采用了 patch 方法，其中先判断了其是否为普通 vnode 或描述组件的 vnode，然后再进行递归直到到达普通 vnode 后，开始进行渲染。</p><h2 id="Q-开发-vue-项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？"><a href="#Q-开发-vue-项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？" class="headerlink" title="Q:开发 vue 项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？"></a>Q:开发 vue 项目中，我们经常采用组件化设计，那么，组件是否一定是越细越好呢？</h2><p>A:并非完全。当组件过于精细时，会导致 vnode 渲染时进行大量递归，影响性能。</p><h2 id="Q-vue-的底层框架设计中，vnode-是什么，为什么会使用-vnode？"><a href="#Q-vue-的底层框架设计中，vnode-是什么，为什么会使用-vnode？" class="headerlink" title="Q:vue 的底层框架设计中，vnode 是什么，为什么会使用 vnode？"></a>Q:vue 的底层框架设计中，vnode 是什么，为什么会使用 vnode？</h2><p>A: vnode，即 virtual node（虚拟节点），是 Vue 对真实 dom 的抽象表示，vnode 使得可以在内存中构建虚拟 dom 树，并由此描述 ui 结构，状态。其最核心的设计目的是：避免直接操作浏览器 DOM，提高性能，同时提供了跨平台能力。</p><p>vnode 的形式如下：</p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs javascript">&#123;<br>  type,      <span class="hljs-comment">// 标签名或组件，例如 &#x27;div&#x27;，组件是 DOM 组渲染单个组件实际就是渲染单组 DOM</span><br>  props,     <span class="hljs-comment">// 属性、事件</span><br>  children,  <span class="hljs-comment">// 子节点，可为文本、VNode 数组或插槽函数（slot），当然也包括 null</span><br>  key,       <span class="hljs-comment">// 唯一标识，用于 diff 时复用节点</span><br>  el         <span class="hljs-comment">// 渲染后对应的真实 DOM（挂载后填充）</span><br>&#125;<br></code></pre></td></tr></table></figure><h3 id="关于为什么使用-vnode-的详细解释"><a href="#关于为什么使用-vnode-的详细解释" class="headerlink" title="关于为什么使用 vnode 的详细解释"></a>关于为什么使用 vnode 的详细解释</h3><h4 id="1-性能优化"><a href="#1-性能优化" class="headerlink" title="1.性能优化"></a>1.性能优化</h4><p>dom 操作代价较高（造成重排 重绘 以及回流，影响性能）。Vnode 在内存中更新通过使用 diff 算法-&gt;最小化 patch-&gt;减少真实 dom 操作</p><h4 id="2-状态与视图分离"><a href="#2-状态与视图分离" class="headerlink" title="2.状态与视图分离"></a>2.状态与视图分离</h4><p>数据变化-&gt;更新 vnode-&gt;patch-&gt;DOM，不直接操作浏览器 api，更易于维护测试</p><h4 id="3-支持跨平台"><a href="#3-支持跨平台" class="headerlink" title="3.支持跨平台"></a>3.支持跨平台</h4><p>vnode 可以与平台渲染器解耦，使其在小程序，canvas，WebGL 上也能渲染。</p><h4 id="4-抽象化"><a href="#4-抽象化" class="headerlink" title="4.抽象化"></a>4.抽象化</h4><p>在 vue 中，vnode 将真实 DOM 抽象为内存中可操作的虚拟节点，使开发者更注重 UI 结构和数据变化</p><h2 id="Q-解释-vnode-的挂载和更新，解释-diff-算法"><a href="#Q-解释-vnode-的挂载和更新，解释-diff-算法" class="headerlink" title="Q:解释 vnode 的挂载和更新，解释 diff 算法"></a>Q:解释 vnode 的挂载和更新，解释 diff 算法</h2><p>vnode 使用 mount 和 patch，判断为挂载后，先判断 vnode 的 type，然后由处理 props-&gt;处理 children-&gt;插入 dom;vnode 判断为更新时，先比较 type，不同则卸载旧并挂载新，相同则复用原来的 dom，并进行更新 props：正常修改，删除，添加，最后更新 children。</p><h3 id="children-的更新"><a href="#children-的更新" class="headerlink" title="children 的更新"></a>children 的更新</h3><p>Vue 通过 VNode 对 DOM 操作进行预处理以节约性能，分为初次挂载和更新两种情况。更新时，文本子节点直接覆盖，null 保持不变；而 VNode 或插槽子节点则走严格 diff：头尾扫描快速跳过相同节点，key 用于复用、删除或新增，LIS（最长递增序列） 优化确保最少移动。</p><h3 id="diff-算法概述：头尾扫描-key-映射-LIS-优化移动"><a href="#diff-算法概述：头尾扫描-key-映射-LIS-优化移动" class="headerlink" title="diff 算法概述：头尾扫描+key 映射+LIS 优化移动"></a>diff 算法概述：头尾扫描+key 映射+LIS 优化移动</h3>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>日语助词概述</title>
     <link href="/2025/03/05/%E6%97%A5%E8%AF%AD/%E6%A0%BC%E5%8A%A9%E8%AF%8D/%E6%A6%82%E8%BF%B0/"/>
     <url>/2025/03/05/%E6%97%A5%E8%AF%AD/%E6%A0%BC%E5%8A%A9%E8%AF%8D/%E6%A6%82%E8%BF%B0/</url>
@@ -16,33 +29,6 @@
       <category>日语学习</category>
       
       <category>助词</category>
-      
-    </categories>
-    
-    
-    <tags>
-      
-      <tag>日语学习</tag>
-      
-    </tags>
-    
-  </entry>
-  
-  
-  
-  <entry>
-    <title>日语动词总结</title>
-    <link href="/2025/03/05/%E6%97%A5%E8%AF%AD/%E5%8A%A8%E8%AF%8D/%E6%B4%BB%E7%94%A8/%E6%80%BB%E7%BB%93/"/>
-    <url>/2025/03/05/%E6%97%A5%E8%AF%AD/%E5%8A%A8%E8%AF%8D/%E6%B4%BB%E7%94%A8/%E6%80%BB%E7%BB%93/</url>
-    
-    <content type="html"><![CDATA[<p>日语中的动词是语法的核心部分之一，其变化和用法丰富多样。以下是日语动词的<strong>分类</strong>、<strong>变化规则</strong>和<strong>主要用法</strong>的详细总结：</p><hr><h3 id="一、日语动词的分类"><a href="#一、日语动词的分类" class="headerlink" title="一、日语动词的分类"></a>一、<strong>日语动词的分类</strong></h3><ol><li><p><strong>根据词尾变化规则分类：</strong></p><ul><li><strong>五段动词</strong>（う段动词）：词尾在「う段」变化。<ul><li><strong>例子</strong>：書く（かく）、読む（よむ）、話す（はなす）</li></ul></li><li><strong>一段动词</strong>（る动词）：词尾在「る」，且去掉「る」后为「い段或え段」。<ul><li><strong>例子</strong>：食べる（たべる）、見る（みる）</li></ul></li><li><strong>不规则动词</strong>：<ul><li><strong>する</strong>（做）<ul><li><strong>例子</strong>：勉強する（学习）、運動する（运动）</li></ul></li><li><strong>来る（くる）</strong>（来）<ul><li><strong>例子</strong>：学校に来る（来学校）</li></ul></li></ul></li></ul></li><li><p><strong>根据意义分类：</strong></p><ul><li><strong>他动词</strong>：需要宾语，表示作用于他物。<ul><li><strong>例子</strong>：ドアを開ける（打开门）</li></ul></li><li><strong>自动词</strong>：表示自身的动作或状态变化。<ul><li><strong>例子</strong>：ドアが開く（门开了）</li></ul></li></ul></li></ol><hr><h3 id="二、动词的活用形式"><a href="#二、动词的活用形式" class="headerlink" title="二、动词的活用形式"></a>二、<strong>动词的活用形式</strong></h3><p>日语动词根据时态、语气和用法，活用出不同的形式：</p><h4 id="1-基本活用形式："><a href="#1-基本活用形式：" class="headerlink" title="1. 基本活用形式："></a>1. <strong>基本活用形式</strong>：</h4><table><thead><tr><th>活用形式</th><th>五段动词例子</th><th>一段动词例子</th><th>不规则动词例子</th></tr></thead><tbody><tr><td>原形</td><td>書く</td><td>食べる</td><td>する、来る</td></tr><tr><td>未然形（否定等）</td><td>書か</td><td>食べ</td><td>し、こ</td></tr><tr><td>连用形（接续等）</td><td>書き</td><td>食べ</td><td>し、き</td></tr><tr><td>终止形（简体）</td><td>書く</td><td>食べる</td><td>する、来る</td></tr><tr><td>连体形（修饰名词）</td><td>書く</td><td>食べる</td><td>する、来る</td></tr><tr><td>假定形</td><td>書けば</td><td>食べれば</td><td>すれば、くれば</td></tr><tr><td>命令形</td><td>書け</td><td>食べろ</td><td>しろ、こい</td></tr></tbody></table><hr><h4 id="2-常见时态变化："><a href="#2-常见时态变化：" class="headerlink" title="2. 常见时态变化："></a>2. <strong>常见时态变化</strong>：</h4><table><thead><tr><th>时态</th><th>表达方式</th><th>例子</th></tr></thead><tbody><tr><td>现在&#x2F;将来形</td><td>原形</td><td>書く（写）、食べる（吃）</td></tr><tr><td>过去形</td><td>た形</td><td>書いた（写了）、食べた（吃了）</td></tr><tr><td>否定形</td><td>ない形</td><td>書かない（不写）、食べない（不吃）</td></tr><tr><td>过去否定形</td><td>ない形+なかった</td><td>書かなかった（没写）、食べなかった</td></tr><tr><td>进行形</td><td>ている形</td><td>書いている（正在写）、食べている</td></tr><tr><td>意志形</td><td>おう形</td><td>書こう（打算写）、食べよう（打算吃）</td></tr><tr><td>推量形</td><td>だろう&#x2F;でしょう</td><td>書くだろう（大概写）、食べるでしょう</td></tr><tr><td>被动态</td><td>れる&#x2F;られる形</td><td>書かれる（被写）、食べられる（被吃）</td></tr><tr><td>使役形</td><td>せる&#x2F;させる形</td><td>書かせる（让写）、食べさせる（让吃）</td></tr></tbody></table><hr><h3 id="三、动词的主要用法"><a href="#三、动词的主要用法" class="headerlink" title="三、动词的主要用法"></a>三、<strong>动词的主要用法</strong></h3><ol><li><p><strong>基本动作表达</strong></p><ul><li>日常生活中最常见的表达。</li><li><strong>例子</strong>：本を読む。（读书）</li></ul></li><li><p><strong>状态表达</strong></p><ul><li>用动词的进行形描述持续状态。</li><li><strong>例子</strong>：窓が開いている。（窗户开着。）</li></ul></li><li><p><strong>意愿和推测</strong></p><ul><li>表示意愿：<strong>意志形</strong> + とする<ul><li><strong>例子</strong>：帰ろうとする。（打算回家）</li></ul></li><li>表示推测：动词原形 + だろう&#x2F;でしょう<ul><li><strong>例子</strong>：雨が降るだろう。（大概会下雨）</li></ul></li></ul></li><li><p><strong>因果关系表达</strong></p><ul><li>使用<strong>た形</strong> + ら表示条件。</li><li><strong>例子</strong>：雨が降ったら、出かけない。（如果下雨，就不出门。）</li></ul></li><li><p><strong>礼貌表达</strong></p><ul><li>使用动词的ます形。</li><li><strong>例子</strong>：本を読みます。（读书。）</li></ul></li><li><p><strong>被动和使役表达</strong></p><ul><li>被动：书面语或表达客观事实。<ul><li><strong>例子</strong>：先生に褒められる。（被老师表扬。）</li></ul></li><li>使役：表达让别人做某事。<ul><li><strong>例子</strong>：子供に宿題をさせる。（让孩子做作业。）</li></ul></li></ul></li></ol><hr><h3 id="四、动词的特殊表达"><a href="#四、动词的特殊表达" class="headerlink" title="四、动词的特殊表达"></a>四、<strong>动词的特殊表达</strong></h3><ol><li><p><strong>て形的多功能用法</strong>：</p><ul><li><strong>接续</strong>：动作的连续。<ul><li><strong>例子</strong>：本を読んで、寝ます。（读书然后睡觉。）</li></ul></li><li><strong>命令</strong>：口语中使用。<ul><li><strong>例子</strong>：早く行って！（快点去！）</li></ul></li><li><strong>原因</strong>：表示因果关系。<ul><li><strong>例子</strong>：雨が降って、試合が中止になった。（因为下雨，比赛取消了。）</li></ul></li></ul></li><li><p><strong>动词的可能形</strong></p><ul><li>表达能力或可能性。</li><li><strong>例子</strong>：泳げる。（会游泳。）</li></ul></li><li><p><strong>动词的敬语表达</strong></p><ul><li><strong>尊他语</strong>：お+连用形+になる。<ul><li><strong>例子</strong>：先生がお話しになる。（老师说话。）</li></ul></li><li><strong>自谦语</strong>：お+连用形+する。<ul><li><strong>例子</strong>：私がお話しします。（我来说。）</li></ul></li></ul></li></ol>]]></content>
-    
-    
-    <categories>
-      
-      <category>日语学习</category>
-      
-      <category>动词</category>
       
     </categories>
     
@@ -112,18 +98,43 @@
   
   
   <entry>
-    <title>Os-外星人歌词音译</title>
-    <link href="/2025/02/24/Anim/Os-%E5%A4%96%E6%98%9F%E4%BA%BA%E6%AD%8C%E8%AF%8D%E9%9F%B3%E8%AF%91/"/>
-    <url>/2025/02/24/Anim/Os-%E5%A4%96%E6%98%9F%E4%BA%BA%E6%AD%8C%E8%AF%8D%E9%9F%B3%E8%AF%91/</url>
+    <title>日语动词总结</title>
+    <link href="/2025/03/05/%E6%97%A5%E8%AF%AD/%E5%8A%A8%E8%AF%8D/%E6%B4%BB%E7%94%A8/%E6%80%BB%E7%BB%93/"/>
+    <url>/2025/03/05/%E6%97%A5%E8%AF%AD/%E5%8A%A8%E8%AF%8D/%E6%B4%BB%E7%94%A8/%E6%80%BB%E7%BB%93/</url>
     
-    <content type="html"><![CDATA[<p>2 ne n se i, ba ka wa hi to ri</p><p>２年生、バカは一人  </p><p>ko ko no ma chi no, so ra mi a ge ru</p><p>ここの町の、空見上げる</p><p>sa bo ri ga ku se i, pa ja ma ki te ru</p><p>サボり学生、パジャマ着てる</p><p>na tsu ya su mi ga, ko zu ni chu u ta i</p><p>夏休みが、来ずに中退 </p><p>chi kyu u de u chu u ni na n te a da na na de mo</p><p>地球で宇宙人なんてあだ名でも</p><p>u chu u no ma chi a wa se shi tsu ni wa</p><p>宇宙の待ち合わせ室には</p><p>mo tto he n na a na ta ga i ta no</p><p>もっと変なあなたがいたの  </p><p>ju shi n shi te ru ka na to</p><p>受信してるかなと</p><p>se tsu zo ku shi te mi ru to</p><p>接続してみると</p><p>mi n na ga sa ke ru na ka de</p><p>みんなが避ける中で  </p><p>pa chi ku ri mi te i ru a na ta ga i ta ka ra</p><p>ぱちくり見ているあなたがいたから </p><p>te re pa shi ru ki mo chi ga</p><p>テレパシる気持ちが</p><p>de n pa ga i ku te mo</p><p>電波が違くても </p><p>ki tto ne na ni ka tsu ka n de ku re te ru</p><p>きっとね何か掴んでくれてる </p><p>a na ta no ko to ga su ki</p><p>あなたの事が好き</p><p>ko ra fu a n te i, pa i to de ki na i</p><p>ka i wa de ki na i so ra mi a ge ru</p><p>sa bo ri ga gu se i, pa ja mi ki te ru </p><p>na tsu ya su mi ga, ko zu ni chu u ta i</p><p>sha ka i de u chu u ji n na n te a da na de mo</p><p>u chu u no ma chi a wa se shi tsu de</p><p>me i bii ma ta me gu ri a e ru yo ne</p><p>a i shi te ku re ru ka na to</p><p>ku ru tta ri shi te mi ru to</p><p>mi n na ga sa ke ru na ka de</p><p>pachi ku ri mi te i ru a na ta ga i ta ka ra</p><p>te re pa shi ku ki mo chi ga</p><p>de n pa ga i ku te mo</p><p>ki tto ne na ni ka tsu ka n de ku re te ru</p><p>a na ta no ko to ga su ki</p><p>ju shi n shi te ku re ru no ka na to</p><p>shi n pa i mo shi te ru n de su</p><p>na n da ka n da de ga wa ni i te ku re te ru</p><p>a na ta ga su ki</p><p>so n na a na ta no ko to ga su ki</p><p>so n na a na to no ko to ga su ki</p><p>so n na a na ta no ko to ga su ki</p><p>so n na a na to no ko to ga suki</p><p>so n na a na ta no ko to ga su ki n de su</p><p>a na ta no ko ta to ga su ki</p><p>so n na a na ta no to ga su ki</p><p>so na a na ta no ko to ga su ki</p><p>so n na a na ta no ko to ga su ki de su</p><p>ki tto a na ta shi ka ju shi n de ki na i no</p>]]></content>
+    <content type="html"><![CDATA[<p>日语中的动词是语法的核心部分之一，其变化和用法丰富多样。以下是日语动词的<strong>分类</strong>、<strong>变化规则</strong>和<strong>主要用法</strong>的详细总结：</p><hr><h3 id="一、日语动词的分类"><a href="#一、日语动词的分类" class="headerlink" title="一、日语动词的分类"></a>一、<strong>日语动词的分类</strong></h3><ol><li><p><strong>根据词尾变化规则分类：</strong></p><ul><li><strong>五段动词</strong>（う段动词）：词尾在「う段」变化。<ul><li><strong>例子</strong>：書く（かく）、読む（よむ）、話す（はなす）</li></ul></li><li><strong>一段动词</strong>（る动词）：词尾在「る」，且去掉「る」后为「い段或え段」。<ul><li><strong>例子</strong>：食べる（たべる）、見る（みる）</li></ul></li><li><strong>不规则动词</strong>：<ul><li><strong>する</strong>（做）<ul><li><strong>例子</strong>：勉強する（学习）、運動する（运动）</li></ul></li><li><strong>来る（くる）</strong>（来）<ul><li><strong>例子</strong>：学校に来る（来学校）</li></ul></li></ul></li></ul></li><li><p><strong>根据意义分类：</strong></p><ul><li><strong>他动词</strong>：需要宾语，表示作用于他物。<ul><li><strong>例子</strong>：ドアを開ける（打开门）</li></ul></li><li><strong>自动词</strong>：表示自身的动作或状态变化。<ul><li><strong>例子</strong>：ドアが開く（门开了）</li></ul></li></ul></li></ol><hr><h3 id="二、动词的活用形式"><a href="#二、动词的活用形式" class="headerlink" title="二、动词的活用形式"></a>二、<strong>动词的活用形式</strong></h3><p>日语动词根据时态、语气和用法，活用出不同的形式：</p><h4 id="1-基本活用形式："><a href="#1-基本活用形式：" class="headerlink" title="1. 基本活用形式："></a>1. <strong>基本活用形式</strong>：</h4><table><thead><tr><th>活用形式</th><th>五段动词例子</th><th>一段动词例子</th><th>不规则动词例子</th></tr></thead><tbody><tr><td>原形</td><td>書く</td><td>食べる</td><td>する、来る</td></tr><tr><td>未然形（否定等）</td><td>書か</td><td>食べ</td><td>し、こ</td></tr><tr><td>连用形（接续等）</td><td>書き</td><td>食べ</td><td>し、き</td></tr><tr><td>终止形（简体）</td><td>書く</td><td>食べる</td><td>する、来る</td></tr><tr><td>连体形（修饰名词）</td><td>書く</td><td>食べる</td><td>する、来る</td></tr><tr><td>假定形</td><td>書けば</td><td>食べれば</td><td>すれば、くれば</td></tr><tr><td>命令形</td><td>書け</td><td>食べろ</td><td>しろ、こい</td></tr></tbody></table><hr><h4 id="2-常见时态变化："><a href="#2-常见时态变化：" class="headerlink" title="2. 常见时态变化："></a>2. <strong>常见时态变化</strong>：</h4><table><thead><tr><th>时态</th><th>表达方式</th><th>例子</th></tr></thead><tbody><tr><td>现在&#x2F;将来形</td><td>原形</td><td>書く（写）、食べる（吃）</td></tr><tr><td>过去形</td><td>た形</td><td>書いた（写了）、食べた（吃了）</td></tr><tr><td>否定形</td><td>ない形</td><td>書かない（不写）、食べない（不吃）</td></tr><tr><td>过去否定形</td><td>ない形+なかった</td><td>書かなかった（没写）、食べなかった</td></tr><tr><td>进行形</td><td>ている形</td><td>書いている（正在写）、食べている</td></tr><tr><td>意志形</td><td>おう形</td><td>書こう（打算写）、食べよう（打算吃）</td></tr><tr><td>推量形</td><td>だろう&#x2F;でしょう</td><td>書くだろう（大概写）、食べるでしょう</td></tr><tr><td>被动态</td><td>れる&#x2F;られる形</td><td>書かれる（被写）、食べられる（被吃）</td></tr><tr><td>使役形</td><td>せる&#x2F;させる形</td><td>書かせる（让写）、食べさせる（让吃）</td></tr></tbody></table><hr><h3 id="三、动词的主要用法"><a href="#三、动词的主要用法" class="headerlink" title="三、动词的主要用法"></a>三、<strong>动词的主要用法</strong></h3><ol><li><p><strong>基本动作表达</strong></p><ul><li>日常生活中最常见的表达。</li><li><strong>例子</strong>：本を読む。（读书）</li></ul></li><li><p><strong>状态表达</strong></p><ul><li>用动词的进行形描述持续状态。</li><li><strong>例子</strong>：窓が開いている。（窗户开着。）</li></ul></li><li><p><strong>意愿和推测</strong></p><ul><li>表示意愿：<strong>意志形</strong> + とする<ul><li><strong>例子</strong>：帰ろうとする。（打算回家）</li></ul></li><li>表示推测：动词原形 + だろう&#x2F;でしょう<ul><li><strong>例子</strong>：雨が降るだろう。（大概会下雨）</li></ul></li></ul></li><li><p><strong>因果关系表达</strong></p><ul><li>使用<strong>た形</strong> + ら表示条件。</li><li><strong>例子</strong>：雨が降ったら、出かけない。（如果下雨，就不出门。）</li></ul></li><li><p><strong>礼貌表达</strong></p><ul><li>使用动词的ます形。</li><li><strong>例子</strong>：本を読みます。（读书。）</li></ul></li><li><p><strong>被动和使役表达</strong></p><ul><li>被动：书面语或表达客观事实。<ul><li><strong>例子</strong>：先生に褒められる。（被老师表扬。）</li></ul></li><li>使役：表达让别人做某事。<ul><li><strong>例子</strong>：子供に宿題をさせる。（让孩子做作业。）</li></ul></li></ul></li></ol><hr><h3 id="四、动词的特殊表达"><a href="#四、动词的特殊表达" class="headerlink" title="四、动词的特殊表达"></a>四、<strong>动词的特殊表达</strong></h3><ol><li><p><strong>て形的多功能用法</strong>：</p><ul><li><strong>接续</strong>：动作的连续。<ul><li><strong>例子</strong>：本を読んで、寝ます。（读书然后睡觉。）</li></ul></li><li><strong>命令</strong>：口语中使用。<ul><li><strong>例子</strong>：早く行って！（快点去！）</li></ul></li><li><strong>原因</strong>：表示因果关系。<ul><li><strong>例子</strong>：雨が降って、試合が中止になった。（因为下雨，比赛取消了。）</li></ul></li></ul></li><li><p><strong>动词的可能形</strong></p><ul><li>表达能力或可能性。</li><li><strong>例子</strong>：泳げる。（会游泳。）</li></ul></li><li><p><strong>动词的敬语表达</strong></p><ul><li><strong>尊他语</strong>：お+连用形+になる。<ul><li><strong>例子</strong>：先生がお話しになる。（老师说话。）</li></ul></li><li><strong>自谦语</strong>：お+连用形+する。<ul><li><strong>例子</strong>：私がお話しします。（我来说。）</li></ul></li></ul></li></ol>]]></content>
+    
+    
+    <categories>
+      
+      <category>日语学习</category>
+      
+      <category>动词</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>日语学习</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>青春男电波女-我与她与月亮的距离</title>
+    <link href="/2025/02/24/Ani/Otoko/"/>
+    <url>/2025/02/24/Ani/Otoko/</url>
+    
+    <content type="html"><![CDATA[<h2 id="我与她与月亮的距离，或许我的人生也只是在40次和60次中的后者吧"><a href="#我与她与月亮的距离，或许我的人生也只是在40次和60次中的后者吧" class="headerlink" title="我与她与月亮的距离，或许我的人生也只是在40次和60次中的后者吧"></a>我与她与月亮的距离，或许我的人生也只是在40次和60次中的后者吧</h2><p>人生之中第一次与家人以外的人渡过的圣诞节夜晚，为我带来什么?有空闲分析这件事情的家伙并不包括我。所以我应该不必说明这件事情，而是应该要相信这变成了我的动力，并且继续生活下去吧。</p><p>自从我跟星中一起渡过圣诞节之后，已经过了一年。我考进了预定要念的高中，而且也有了手机，但还是没有女朋友。现在已经不能把这件事怪罪在考试上了，所以有点痛苦。包括一直在说一切都是考试的错的以前的自己，都看起来很可笑。</p><p>我跟星中有时候会在上学的途中擦身而过。但因为她大部分都跟男朋友在一起，所以我们擦身而过的时候并不会交谈，或者是让脚踏车停下来。我与星中之间的月亮，除了曾经在一天之中变成新月之外，就没有再消失了。因为有六十次，所以这是没办法的事情。</p><p>到了我以高中一年级学生的身分迎接的一月。过年之后，父母亲告诉我调职与转学的事情。青天霹雳这个形容词到底适不适合当时的状况这一点，因为我在准备考试时记起来的知识几乎都消失<br>了，所以没办法断定，但我很惊讶。同时也很高兴几乎是独自生活这种生活形态对我来说非常有魅力。虽然我几乎没见过要跟我一起生活的姑姑，但既然是行事正经的父亲的妹妹，那她应该就是一个深思熟虑的人吧。因为她平常要去上班所以应该不太会干涉我，可以说真的是很适合我的环境。</p><p>所谓的很适合到底是什么意思?当然就是指获得青春点数。先不管这一开始是谁想出来的，但我决定把我的青春投注在这个点数的增减上。这就等于是把星中丢掉的点数卡捡起来，并且继续使用。<br>国中三年级的星中与我之间存在的就是青春。我觉得那不是恋爱，也不是友情。我们还不成熟，也不会替对方着想或注意到四周，只是拚命的把手伸向对方。就像是虽然就在身边，但却伸起彼此的手去追求高挂在天上的月亮。</p><p>而且还在无法明确理解的状况下，把对方要得团团转。并且在不了解距离的状况下，相信自己碰触到对方，于是就握紧了手。在那个年纪，我们被只会在国中三年级时产生的某种东西刺激，所以我们非常扮命。我认为所谓的青春并不是指年轻或是有气势这类的事情，而是想要做到「每个时候的愿望」。<br>从这一点来看，我与星中的关系，即使是在擦身而过的那四十次之中，应该算是做到青春了吧。虽然我们曾经放弃，而且还绕过远路，但是心中却特别存下了「+4」的青春点数。虽然对星<br>中来说是5分，但我却不经意的降低分数。</p><p>在我心中形成的青春点数满分是5分，所以审核标准会比较严格一点。</p><p>所以呢，这次转学也没关系。</p><p>因为高中二年级的我会达成自己描绘的青春，并且得到很多点数。不过今年倒几乎是负的。不过我要去居住的地方，比这里还热闹。「等我到了都会之后，呃.…..我想跟女生去海边，并且一起跳进海里之类的。」我很高兴的努力打包搬家行李的星期日，真的让我感到幸福。脑中在想着足以让我碰触到我与目前还不存在的女朋友之间的月亮的青春点数。</p>]]></content>
     
     
     <categories>
       
       <category>Anim</category>
-      
-      <category>Music</category>
       
     </categories>
     
@@ -139,16 +150,18 @@
   
   
   <entry>
-    <title>青春男电波女-我与她与月亮的距离</title>
-    <link href="/2025/02/24/Anim/Otoko/"/>
-    <url>/2025/02/24/Anim/Otoko/</url>
+    <title>Os-外星人歌词音译</title>
+    <link href="/2025/02/24/Ani/Os-%E5%A4%96%E6%98%9F%E4%BA%BA%E6%AD%8C%E8%AF%8D%E9%9F%B3%E8%AF%91/"/>
+    <url>/2025/02/24/Ani/Os-%E5%A4%96%E6%98%9F%E4%BA%BA%E6%AD%8C%E8%AF%8D%E9%9F%B3%E8%AF%91/</url>
     
-    <content type="html"><![CDATA[<h2 id="我与她与月亮的距离，或许我的人生也只是在40次和60次中的后者吧"><a href="#我与她与月亮的距离，或许我的人生也只是在40次和60次中的后者吧" class="headerlink" title="我与她与月亮的距离，或许我的人生也只是在40次和60次中的后者吧"></a>我与她与月亮的距离，或许我的人生也只是在40次和60次中的后者吧</h2><p>人生之中第一次与家人以外的人渡过的圣诞节夜晚，为我带来什么?有空闲分析这件事情的家伙并不包括我。所以我应该不必说明这件事情，而是应该要相信这变成了我的动力，并且继续生活下去吧。</p><p>自从我跟星中一起渡过圣诞节之后，已经过了一年。我考进了预定要念的高中，而且也有了手机，但还是没有女朋友。现在已经不能把这件事怪罪在考试上了，所以有点痛苦。包括一直在说一切都是考试的错的以前的自己，都看起来很可笑。</p><p>我跟星中有时候会在上学的途中擦身而过。但因为她大部分都跟男朋友在一起，所以我们擦身而过的时候并不会交谈，或者是让脚踏车停下来。我与星中之间的月亮，除了曾经在一天之中变成新月之外，就没有再消失了。因为有六十次，所以这是没办法的事情。</p><p>到了我以高中一年级学生的身分迎接的一月。过年之后，父母亲告诉我调职与转学的事情。青天霹雳这个形容词到底适不适合当时的状况这一点，因为我在准备考试时记起来的知识几乎都消失<br>了，所以没办法断定，但我很惊讶。同时也很高兴几乎是独自生活这种生活形态对我来说非常有魅力。虽然我几乎没见过要跟我一起生活的姑姑，但既然是行事正经的父亲的妹妹，那她应该就是一个深思熟虑的人吧。因为她平常要去上班所以应该不太会干涉我，可以说真的是很适合我的环境。</p><p>所谓的很适合到底是什么意思?当然就是指获得青春点数。先不管这一开始是谁想出来的，但我决定把我的青春投注在这个点数的增减上。这就等于是把星中丢掉的点数卡捡起来，并且继续使用。<br>国中三年级的星中与我之间存在的就是青春。我觉得那不是恋爱，也不是友情。我们还不成熟，也不会替对方着想或注意到四周，只是拚命的把手伸向对方。就像是虽然就在身边，但却伸起彼此的手去追求高挂在天上的月亮。</p><p>而且还在无法明确理解的状况下，把对方要得团团转。并且在不了解距离的状况下，相信自己碰触到对方，于是就握紧了手。在那个年纪，我们被只会在国中三年级时产生的某种东西刺激，所以我们非常扮命。我认为所谓的青春并不是指年轻或是有气势这类的事情，而是想要做到「每个时候的愿望」。<br>从这一点来看，我与星中的关系，即使是在擦身而过的那四十次之中，应该算是做到青春了吧。虽然我们曾经放弃，而且还绕过远路，但是心中却特别存下了「+4」的青春点数。虽然对星<br>中来说是5分，但我却不经意的降低分数。</p><p>在我心中形成的青春点数满分是5分，所以审核标准会比较严格一点。</p><p>所以呢，这次转学也没关系。</p><p>因为高中二年级的我会达成自己描绘的青春，并且得到很多点数。不过今年倒几乎是负的。不过我要去居住的地方，比这里还热闹。「等我到了都会之后，呃.…..我想跟女生去海边，并且一起跳进海里之类的。」我很高兴的努力打包搬家行李的星期日，真的让我感到幸福。脑中在想着足以让我碰触到我与目前还不存在的女朋友之间的月亮的青春点数。</p>]]></content>
+    <content type="html"><![CDATA[<p>2 ne n se i, ba ka wa hi to ri</p><p>２年生、バカは一人  </p><p>ko ko no ma chi no, so ra mi a ge ru</p><p>ここの町の、空見上げる</p><p>sa bo ri ga ku se i, pa ja ma ki te ru</p><p>サボり学生、パジャマ着てる</p><p>na tsu ya su mi ga, ko zu ni chu u ta i</p><p>夏休みが、来ずに中退 </p><p>chi kyu u de u chu u ni na n te a da na na de mo</p><p>地球で宇宙人なんてあだ名でも</p><p>u chu u no ma chi a wa se shi tsu ni wa</p><p>宇宙の待ち合わせ室には</p><p>mo tto he n na a na ta ga i ta no</p><p>もっと変なあなたがいたの  </p><p>ju shi n shi te ru ka na to</p><p>受信してるかなと</p><p>se tsu zo ku shi te mi ru to</p><p>接続してみると</p><p>mi n na ga sa ke ru na ka de</p><p>みんなが避ける中で  </p><p>pa chi ku ri mi te i ru a na ta ga i ta ka ra</p><p>ぱちくり見ているあなたがいたから </p><p>te re pa shi ru ki mo chi ga</p><p>テレパシる気持ちが</p><p>de n pa ga i ku te mo</p><p>電波が違くても </p><p>ki tto ne na ni ka tsu ka n de ku re te ru</p><p>きっとね何か掴んでくれてる </p><p>a na ta no ko to ga su ki</p><p>あなたの事が好き</p><p>ko ra fu a n te i, pa i to de ki na i</p><p>ka i wa de ki na i so ra mi a ge ru</p><p>sa bo ri ga gu se i, pa ja mi ki te ru </p><p>na tsu ya su mi ga, ko zu ni chu u ta i</p><p>sha ka i de u chu u ji n na n te a da na de mo</p><p>u chu u no ma chi a wa se shi tsu de</p><p>me i bii ma ta me gu ri a e ru yo ne</p><p>a i shi te ku re ru ka na to</p><p>ku ru tta ri shi te mi ru to</p><p>mi n na ga sa ke ru na ka de</p><p>pachi ku ri mi te i ru a na ta ga i ta ka ra</p><p>te re pa shi ku ki mo chi ga</p><p>de n pa ga i ku te mo</p><p>ki tto ne na ni ka tsu ka n de ku re te ru</p><p>a na ta no ko to ga su ki</p><p>ju shi n shi te ku re ru no ka na to</p><p>shi n pa i mo shi te ru n de su</p><p>na n da ka n da de ga wa ni i te ku re te ru</p><p>a na ta ga su ki</p><p>so n na a na ta no ko to ga su ki</p><p>so n na a na to no ko to ga su ki</p><p>so n na a na ta no ko to ga su ki</p><p>so n na a na to no ko to ga suki</p><p>so n na a na ta no ko to ga su ki n de su</p><p>a na ta no ko ta to ga su ki</p><p>so n na a na ta no to ga su ki</p><p>so na a na ta no ko to ga su ki</p><p>so n na a na ta no ko to ga su ki de su</p><p>ki tto a na ta shi ka ju shi n de ki na i no</p>]]></content>
     
     
     <categories>
       
       <category>Anim</category>
+      
+      <category>Music</category>
       
     </categories>
     
